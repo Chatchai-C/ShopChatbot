@@ -14,11 +14,27 @@ async def handle_request(request: Request):
     parameters = payload['queryResult']['parameters']
     output_contexts = payload['queryResult']['outputContexts']
 
-    if intent == "Tracking.Order.Num - context ongoing-tracking":
-        response = track_order(parameters)
-        return response 
-        
+    intent_handler_dict = {
+        'Add.Order - context ongoing-order': add_to_order,
+        #'Remove.Order - context ongoing-order': remove_from_order,
+        #'Complete.Order - context ongoing-order': complete_order,
+        'Tracking.Order.Num - context ongoing-tracking': track_order
+    }
 
+    return intent_handler_dict[intent](parameters)
+
+def add_to_order(parameters: dict):
+    item = parameters["Item"]
+    quantities = parameters["number"]
+
+    if len(item) != len(quantities):
+        fulfillment_text = f"ขอโทษทีค่ะ ฉันไม่เข้าใจสิ่งที่คุณกำลังอธิบาย กรุณาบอกชื่อสินค้าและจำนวนชิ้นด้วยค่ะ"
+    else:
+        fulfillment_text = f"{item} และ {quantities} in backend"
+    
+    return JSONResponse(content={
+        "fulfillmentText": fulfillment_text
+    })
 
 def track_order(parameters: dict):
     order_id = int(parameters['number'])
